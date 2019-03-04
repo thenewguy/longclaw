@@ -1,4 +1,8 @@
+import datetime
+import uuid
+
 from django.db import models
+from django.utils import timezone
 
 from wagtail.admin.edit_handlers import FieldPanel
 from wagtail.snippets.models import register_snippet
@@ -79,3 +83,48 @@ class Country(models.Model):
     def __str__(self):
         """ Return the display form of the country name"""
         return self.name
+
+class AbstractShippingQuote(models.Model):
+    """
+    Abstract shipping quote for a particular basket
+    """
+    class Meta:
+        unique_together = (
+            ('basket_id', 'is_selected', 'key'),
+        )
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    basket_id = models.CharField(max_length=32)
+    expires_at = models.DateTimeField(
+        blank=True,
+        default=lambda: timezone.now() + datetime.timedelta(days=30),
+        null=True,
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    carrier = models.CharField(max_length=255)
+    service = models.CharField(max_length=255)
+    description = models.TextField()
+    key = models.CharField(max_length=255, editable=False)
+    is_selected = models.NullBooleanField()
+    
+    def create_shipping_quotes(self, origin, destination, basket_id):
+        raise NotImplementedError()
+    
+    def get_shipping_quotes(self, origin, destination, basket_id):
+        raise NotImplementedError()
+    
+    def get_selected_shipping_quote(self, origin, destination, basket_id):
+        raise NotImplementedError()
+    
+    def select_shipping_quote(self, origin, destination, basket_id, quote_id):
+        raise NotImplementedError()
+    
+    def remove_expired_shipping_quotes(self):
+        raise NotImplementedError()
+
+class ShippingQuote(AbstractShippingQuote):
+    """
+    Default shipping implementation which integrates the ShippingRate model
+    """
+    
+    
