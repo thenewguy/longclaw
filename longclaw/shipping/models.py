@@ -7,6 +7,9 @@ from django.utils import timezone
 from wagtail.admin.edit_handlers import FieldPanel
 from wagtail.snippets.models import register_snippet
 
+from longclaw.configuration.models import Configuration
+from longclaw.shipping.utils import get_shipping_cost, InvalidShippingRate, InvalidShippingCountry
+
 
 @register_snippet
 class Address(models.Model):
@@ -131,5 +134,36 @@ class ShippingQuote(AbstractShippingQuote):
     """
     Default shipping implementation which integrates the ShippingRate model
     """
-    
-    
+    @classmethod
+    def create_shipping_quotes(cls, destination, basket_id, site):
+        site_settings = Configuration.for_site(site)
+        
+        # This extra query is a hack to tap into existing code and should be optimized
+        shipping_rate_names = ShippingRate.objects.filter(
+            countries__in=[destination.country.pk]
+        ).values_list('name', flat=True)
+        
+        quotes = []
+        
+        for name in shipping_rate_names:
+            try:
+                shipping_rate = get_shipping_cost(
+                    site_settings,
+                    destination.country.pk,
+                    name,
+                )
+            except InvalidShippingRate, InvalidShippingCountry:
+                pass
+            else:
+                instance = cls()
+                instance.basket_id = basket_id
+                instance.amount = shipping_rate["rate"]
+                instance.carrier = shipping_rate["carrier"]
+                instance.service = shipping_rate["carrier"]
+                instance.description = shipping_rate["description"]
+                instance.key = cls.generate_key(destination, basket_id)
+                instance.is_selected = True
+                instance.save()
+                quotes.append(instance)
+        
+        return quotes
