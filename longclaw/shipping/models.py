@@ -131,6 +131,9 @@ class AbstractShippingQuote(models.Model):
     
     def remove_expired_shipping_quotes(self):
         raise NotImplementedError()
+    
+    def can_book(self, destination, basket_id, site):
+        return self.is_valid and timezone.now() < self.expires_at and self.key == self.generate_key(destination, basket_id, site)
 
 class ShippingQuote(AbstractShippingQuote):
     """

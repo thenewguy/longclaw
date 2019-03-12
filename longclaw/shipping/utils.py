@@ -33,3 +33,10 @@ def get_shipping_cost(settings, country_code=None, name=None):
             "description": shipping_rate_qrs.description,
             "carrier": shipping_rate_qrs.carrier}
     return shipping_rate
+
+SHIPPING_QUOTE_MODEL = None
+
+def get_shipping_quote_model():
+    if SHIPPING_QUOTE_MODEL:
+        return SHIPPING_QUOTE_MODEL
+    raise NotImplementedError()
