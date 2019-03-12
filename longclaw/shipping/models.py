@@ -162,8 +162,12 @@ class ShippingQuote(AbstractShippingQuote):
                 instance.service = name
                 instance.description = shipping_rate["description"]
                 instance.key = cls.generate_key(destination, basket_id)
-                instance.is_selected = True
                 instance.save()
                 quotes.append(instance)
+        
+        if len(quotes) == 1:
+            instance = quotes[0]
+            instance.is_selected = True
+            instance.save()
         
         return quotes
