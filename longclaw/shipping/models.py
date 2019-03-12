@@ -144,8 +144,14 @@ class ShippingQuote(AbstractShippingQuote):
         ).values_list('name', flat=True)
         
         quotes = []
+        key = cls.generate_key(destination, basket_id)
         
         for name in shipping_rate_names:
+            lookups = dict(
+                basket_id = basket_id,
+                service = name,
+                key = key,
+            )
             try:
                 shipping_rate = get_shipping_cost(
                     site_settings,
@@ -155,14 +161,12 @@ class ShippingQuote(AbstractShippingQuote):
             except InvalidShippingRate, InvalidShippingCountry:
                 pass
             else:
-                instance = cls()
-                instance.basket_id = basket_id
-                instance.amount = shipping_rate["rate"]
-                instance.carrier = shipping_rate["carrier"]
-                instance.service = name
-                instance.description = shipping_rate["description"]
-                instance.key = cls.generate_key(destination, basket_id)
-                instance.save()
+                details = dict(
+                    amount = shipping_rate["rate"],
+                    carrier = shipping_rate["carrier"],
+                    description = shipping_rate["description"],
+                )
+                instance = cls.objects.update_or_create(defaults=lookups, **details)
                 quotes.append(instance)
         
         if len(quotes) == 1:
