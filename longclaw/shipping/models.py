@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import uuid
 
 from django.db import models
@@ -109,6 +110,7 @@ class AbstractShippingQuote(models.Model):
     description = models.TextField()
     key = models.CharField(max_length=255, editable=False)
     is_selected = models.NullBooleanField()
+    is_valid = models.BooleanField()
     
     @classmethod
     def generate_key(cls, destination, basket_id, site):
@@ -152,6 +154,7 @@ class ShippingQuote(AbstractShippingQuote):
                 service = name,
                 key = key,
             )
+            valid = True
             try:
                 shipping_rate = get_shipping_cost(
                     site_settings,
@@ -159,15 +162,21 @@ class ShippingQuote(AbstractShippingQuote):
                     name,
                 )
             except InvalidShippingRate, InvalidShippingCountry:
-                pass
-            else:
-                details = dict(
-                    amount = shipping_rate["rate"],
-                    carrier = shipping_rate["carrier"],
-                    description = shipping_rate["description"],
-                )
-                instance = cls.objects.update_or_create(defaults=lookups, **details)
-                quotes.append(instance)
+                shipping_rate = {
+                    'amount': decimal.Decimal(0),
+                    'carrier': 'INVALID',
+                    'description': 'INVALID',
+                }
+                valid = False
+                
+            details = dict(
+                amount = shipping_rate["rate"],
+                carrier = shipping_rate["carrier"],
+                description = shipping_rate["description"],
+                is_valid = valid,
+            )
+            instance = cls.objects.update_or_create(defaults=lookups, **details)
+            quotes.append(instance)
         
         if len(quotes) == 1:
             instance = quotes[0]
