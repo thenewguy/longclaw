@@ -159,7 +159,7 @@ class ShippingQuote(AbstractShippingQuote):
                 instance.basket_id = basket_id
                 instance.amount = shipping_rate["rate"]
                 instance.carrier = shipping_rate["carrier"]
-                instance.service = shipping_rate["carrier"]
+                instance.service = name
                 instance.description = shipping_rate["description"]
                 instance.key = cls.generate_key(destination, basket_id)
                 instance.is_selected = True
