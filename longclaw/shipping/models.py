@@ -107,16 +107,21 @@ class AbstractShippingQuote(models.Model):
     key = models.CharField(max_length=255, editable=False)
     is_selected = models.NullBooleanField()
     
-    def create_shipping_quotes(self, origin, destination, basket_id):
+    @classmethod
+    def generate_key(cls, destination, basket_id, site):
         raise NotImplementedError()
     
-    def get_shipping_quotes(self, origin, destination, basket_id):
+    @classmethod
+    def create_shipping_quotes(cls, destination, basket_id, site):
         raise NotImplementedError()
     
-    def get_selected_shipping_quote(self, origin, destination, basket_id):
+    def get_shipping_quotes(self, destination, basket_id, site):
         raise NotImplementedError()
     
-    def select_shipping_quote(self, origin, destination, basket_id, quote_id):
+    def get_selected_shipping_quote(self, destination, basket_id, site):
+        raise NotImplementedError()
+    
+    def select_shipping_quote(self, destination, basket_id, quote_id, site):
         raise NotImplementedError()
     
     def remove_expired_shipping_quotes(self):
