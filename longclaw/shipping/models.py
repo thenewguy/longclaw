@@ -135,7 +135,7 @@ class AbstractShippingQuote(models.Model):
     def can_book(self, destination, basket_id, site):
         return self.is_valid and timezone.now() < self.expires_at and self.key == self.generate_key(destination, basket_id, site)
 
-class ShippingQuote(AbstractShippingQuote):
+class DefaultShippingQuote(AbstractShippingQuote):
     """
     Default shipping implementation which integrates the ShippingRate model
     """

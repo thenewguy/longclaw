@@ -4,7 +4,7 @@ from django.utils import timezone
 from ipware.ip import get_real_ip
 
 from longclaw.basket.utils import get_basket_items, destroy_basket
-from longclaw.shipping.utils import get_shipping_cost, SHIPPING_QUOTE_MODEL, InvalidShippingRate
+from longclaw.shipping.utils import get_shipping_cost, get_shipping_quote_model, InvalidShippingRate
 from longclaw.checkout.errors import PaymentError
 from longclaw.orders.models import Order, OrderItem
 from longclaw.shipping.models import Address
@@ -66,7 +66,7 @@ def create_order(email,
     
     shipping_quote = None
     if shipping_option:
-        shipping_quote = SHIPPING_QUOTE_MODEL.objects.get(pk=shipping_option)
+        shipping_quote = get_shipping_quote_model().objects.get(pk=shipping_option)
         can_book_quote = shipping_quote.can_book(shipping_address, basket_id, request.site)
         if not can_book_quote:
             raise InvalidShippingRate('Selected shipping quote cannot be booked.')
