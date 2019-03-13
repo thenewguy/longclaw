@@ -1,9 +1,12 @@
 import datetime
 import decimal
+import hashlib
+import json
 import uuid
 
 from django.db import models
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 
 from wagtail.admin.edit_handlers import FieldPanel
 from wagtail.snippets.models import register_snippet
@@ -141,6 +144,17 @@ class DefaultShippingQuote(AbstractShippingQuote):
     Default shipping implementation which integrates the ShippingRate model
     """
     @classmethod
+    def generate_key(cls, destination, basket_id, site):
+        data = {
+            'destination_country': destination.country.pk,
+            'site': site.pk if site else site,
+        }
+        datastring = json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+        databytes = force_bytes(datastring)
+        digest = hashlib.sha1(databytes).hexdigest()
+        return digest
+    
+    @classmethod
     def create_shipping_quotes(cls, destination, basket_id, site):
         site_settings = Configuration.for_site(site)
         
@@ -150,7 +164,7 @@ class DefaultShippingQuote(AbstractShippingQuote):
         ).values_list('name', flat=True)
         
         quotes = []
-        key = cls.generate_key(destination, basket_id)
+        key = cls.generate_key(destination, basket_id, site)
         
         for name in shipping_rate_names:
             lookups = dict(
