@@ -99,6 +99,7 @@ class AbstractShippingQuote(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     basket_id = models.CharField(max_length=32)
+    updated_at = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField(
         blank=True,
         default=lambda: timezone.now() + datetime.timedelta(days=30),
